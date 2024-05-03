@@ -1,0 +1,5 @@
+name: OriginBlacklist
+main: net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.OriginBlacklistPluginBungee
+version: 1.0.0
+description: Plugin for EaglercraftXBungee servers to add the "origin blacklist" feature from 1.5.2
+author: lax1dude

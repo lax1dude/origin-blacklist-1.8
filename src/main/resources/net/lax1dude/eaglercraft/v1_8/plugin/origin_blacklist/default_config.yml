@@ -1,0 +1,11 @@
+origin_blacklist_kick_message: 'End of stream'
+origin_blacklist_block_missing_origin_header: false
+origin_blacklist_block_offline_download: false
+origin_blacklist_block_replit_clients: false
+enable_web_origin_blacklist: false
+origin_blacklist_subscriptions:
+- 'add url here'
+origin_blacklist_use_simple_whitelist: false
+origin_blacklist_simple_whitelist:
+- 'type the name of your client\'s domain here'
+- '(if \'origin_blacklist_use_simple_whitelist\' is true)'
