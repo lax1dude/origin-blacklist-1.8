@@ -378,4 +378,8 @@ public class OriginBlacklist {
 		return false;
 	}
 
+	public File getLocalBlacklist() {
+		return localBlacklist;
+	}
+
 }

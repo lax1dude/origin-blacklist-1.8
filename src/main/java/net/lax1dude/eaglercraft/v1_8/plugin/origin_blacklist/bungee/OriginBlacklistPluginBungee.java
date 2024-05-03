@@ -9,7 +9,11 @@ import java.util.logging.Logger;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklist;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklistConfigAdapter;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklistLoggerAdapter;
+import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.command.CommandDomainBlock;
+import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.command.CommandDomainBlockDomain;
+import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.command.CommandDomainUnblock;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.plugin.PluginManager;
 
 /**
  * Copyright (c) 2024 lax1dude. All Rights Reserved.
@@ -84,7 +88,11 @@ public class OriginBlacklistPluginBungee extends Plugin {
 				}
 			}, 0, 6000l);
 		}
-		getProxy().getPluginManager().registerListener(this, new OriginBlacklistListenerBungee(this));
+		PluginManager pm = getProxy().getPluginManager();
+		pm.registerListener(this, new OriginBlacklistListenerBungee(this));
+		pm.registerCommand(this, new CommandDomainBlock());
+		pm.registerCommand(this, new CommandDomainBlockDomain());
+		pm.registerCommand(this, new CommandDomainUnblock());
 	}
 
 	@Override
@@ -94,6 +102,7 @@ public class OriginBlacklistPluginBungee extends Plugin {
 			updateOriginBlacklistTimer = null;
 		}
 		getProxy().getPluginManager().unregisterListeners(this);
+		getProxy().getPluginManager().unregisterCommands(this);
 	}
 
 	public static OriginBlacklistPluginBungee getPlugin() {
