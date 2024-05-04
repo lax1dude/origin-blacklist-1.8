@@ -1,9 +1,13 @@
 package net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.command;
 
+import net.lax1dude.eaglercraft.v1_8.plugin.gateway_bungeecord.server.EaglerInitialHandler;
+import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklist;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.bungee.OriginBlacklistPluginBungee;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 /**
@@ -33,7 +37,18 @@ public class CommandDomainBlockDomain extends Command {
 			p0.sendMessage(new TextComponent(ChatColor.RED + "Please follow this command by a domain"));
 			return;
 		}
-		OriginBlacklistPluginBungee.getPlugin().list.addLocal(p1[0]);
+		OriginBlacklist bl = OriginBlacklistPluginBungee.getPlugin().list;
+		bl.addLocal(p1[0]);
+		for(ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+			if(p.getPendingConnection() instanceof EaglerInitialHandler) {
+				String o = OriginBlacklist.removeProtocolFromOrigin(((EaglerInitialHandler)p.getPendingConnection()).getOrigin());
+				if(o != null) {
+					if(bl.test(o)) {
+						p.disconnect(new TextComponent(bl.getKickMessage() == null ? "End of stream" : bl.getKickMessage()));
+					}
+				}
+			}
+		}
 		p0.sendMessage(new TextComponent(ChatColor.GREEN + "The domain '" + ChatColor.WHITE + p1[0] + ChatColor.GREEN + "' was added to the block list"));
 	}
 

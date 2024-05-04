@@ -42,6 +42,7 @@ public class OriginBlacklist {
 	public final Collection<Pattern> regexLocalBlacklist = new ArrayList();
 	public final Collection<Pattern> regexBlacklistReplit = new ArrayList();
 	public final Collection<String> simpleWhitelist = new ArrayList();
+	private final Object localBlacklistLock = new Object();
 	private File localBlacklist = null;
 	private String subscriptionDownloadUserAgent = null;
 	private Collection<String> blacklistSubscriptions = null;
@@ -248,138 +249,154 @@ public class OriginBlacklist {
 				}
 			}
 		}
-		if(localBlacklist.exists()) {
-			long lastLocalEdit = localBlacklist.lastModified();
-			if(lastLocalEdit != lastLocalUpdate) {
-				lastLocalUpdate = lastLocalEdit;
-				synchronized(regexBlacklist) {
-					try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
-						regexLocalBlacklist.clear();
-						localWhitelistMode = false;
-						boolean foundWhitelistStatement = false;
-						String ss;
-						while((ss = is.readLine()) != null) {
-							try {
-								if((ss = ss.trim()).length() > 0) {
-									if(!ss.startsWith("#")) {
-										regexLocalBlacklist.add(Pattern.compile(ss));
-									}else {
-										String st = ss.substring(1).trim();
-										if(st.startsWith("whitelistMode:")) {
-											foundWhitelistStatement = true;
-											String str = st.substring(14).trim().toLowerCase();
-											localWhitelistMode = str.equals("true") || str.equals("on") || str.equals("1");
+		synchronized(localBlacklistLock) {
+			if(localBlacklist.exists()) {
+				long lastLocalEdit = localBlacklist.lastModified();
+				if(lastLocalEdit != lastLocalUpdate) {
+					lastLocalUpdate = lastLocalEdit;
+					synchronized(regexBlacklist) {
+						try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
+							regexLocalBlacklist.clear();
+							localWhitelistMode = false;
+							boolean foundWhitelistStatement = false;
+							String ss;
+							while((ss = is.readLine()) != null) {
+								try {
+									if((ss = ss.trim()).length() > 0) {
+										if(!ss.startsWith("#")) {
+											regexLocalBlacklist.add(Pattern.compile(ss));
+										}else {
+											String st = ss.substring(1).trim();
+											if(st.startsWith("whitelistMode:")) {
+												foundWhitelistStatement = true;
+												String str = st.substring(14).trim().toLowerCase();
+												localWhitelistMode = str.equals("true") || str.equals("on") || str.equals("1");
+											}
 										}
 									}
+								}catch(PatternSyntaxException shit) {
+									logger.error("the local " + (localWhitelistMode ? "whitelist" : "blacklist") + " regex '" + ss + "' is invalid");
 								}
-							}catch(PatternSyntaxException shit) {
-								logger.error("the local " + (localWhitelistMode ? "whitelist" : "blacklist") + " regex '" + ss + "' is invalid");
 							}
+							is.close();
+							if(!foundWhitelistStatement) {
+								List<String> newLines = new ArrayList();
+								newLines.add("#whitelistMode: false");
+								newLines.add("");
+								try(BufferedReader is2 = new BufferedReader(new FileReader(localBlacklist))) {
+									while((ss = is2.readLine()) != null) {
+										newLines.add(ss);
+									}
+								}
+								try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
+									for(String str : newLines) {
+										os.println(str);
+									}
+								}
+								lastLocalUpdate = localBlacklist.lastModified();
+							}
+							logger.info("Reloaded '" + localBlacklist.getName() + "'.");
+						}catch(IOException ex) {
+							regexLocalBlacklist.clear();
+							logger.error("failed to read local " + (localWhitelistMode ? "whitelist" : "blacklist") + " file '" + localBlacklist.getName() + "'");
+							ex.printStackTrace();
 						}
-						is.close();
-						if(!foundWhitelistStatement) {
-							List<String> newLines = new ArrayList();
-							newLines.add("#whitelistMode: false");
-							newLines.add("");
-							try(BufferedReader is2 = new BufferedReader(new FileReader(localBlacklist))) {
-								while((ss = is2.readLine()) != null) {
-									newLines.add(ss);
-								}
-							}
-							try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
-								for(String str : newLines) {
-									os.println(str);
-								}
-							}
-							lastLocalUpdate = localBlacklist.lastModified();
-						}
-						logger.info("Reloaded '" + localBlacklist.getName() + "'.");
-					}catch(IOException ex) {
-						regexLocalBlacklist.clear();
-						logger.error("failed to read local " + (localWhitelistMode ? "whitelist" : "blacklist") + " file '" + localBlacklist.getName() + "'");
-						ex.printStackTrace();
 					}
 				}
+				return;
 			}
-		}else {
-			synchronized(regexBlacklist) {
-				if(!regexLocalBlacklist.isEmpty()) {
-					logger.warn("the blacklist file '" + localBlacklist.getName() + "' has been deleted");
-				}
-				regexLocalBlacklist.clear();
+		}
+		synchronized(regexBlacklist) {
+			if(!regexLocalBlacklist.isEmpty()) {
+				logger.warn("the blacklist file '" + localBlacklist.getName() + "' has been deleted");
 			}
+			regexLocalBlacklist.clear();
 		}
 	}
 
 	public void addLocal(String o) {
-		String p = "^" + Pattern.quote(o.trim()) + "$";
-		ArrayList<String> lines = new ArrayList();
-		if(localBlacklist.exists()) {
-			try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
-				String ss;
-				while((ss = is.readLine()) != null) {
-					if((ss = ss.trim()).length() > 0) {
-						lines.add(ss);
+		synchronized(localBlacklistLock) {
+			String p = "^" + Pattern.quote(o.trim()) + "$";
+			ArrayList<String> lines = new ArrayList();
+			if(localBlacklist.exists()) {
+				try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
+					String ss;
+					while((ss = is.readLine()) != null) {
+						if((ss = ss.trim()).length() > 0) {
+							lines.add(ss);
+						}
 					}
+				}catch(IOException ex) {
+					// ?
 				}
-			}catch(IOException ex) {
-				// ?
 			}
-		}
-		if(lines.isEmpty()) {
-			lines.add("#whitelist false");
-			lines.add("");
-		}
-		if(!lines.contains(p)) {
-			lines.add(p);
-			try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
-				for(String s : lines) {
-					os.println(s);
+			if(lines.isEmpty()) {
+				lines.add("#whitelistMode: false");
+				lines.add("");
+			}
+			if(!lines.contains(p)) {
+				lines.add(p);
+				try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
+					for(String s : lines) {
+						os.println(s);
+					}
+				}catch(IOException ex) {
+					// ?
 				}
 				lastLocalUpdate = 0l;
 				update();
-			}catch(IOException ex) {
-				// ?
 			}
 		}
 	}
 
 	public boolean removeLocal(String o) {
-		String p = "^" + Pattern.quote(o.trim()) + "$";
-		ArrayList<String> lines = new ArrayList();
-		if(localBlacklist.exists()) {
-			try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
-				String ss;
-				while((ss = is.readLine()) != null) {
-					if((ss = ss.trim()).length() > 0) {
-						lines.add(ss);
+		synchronized(localBlacklistLock) {
+			String p = "^" + Pattern.quote(o.trim()) + "$";
+			ArrayList<String> lines = new ArrayList();
+			if(localBlacklist.exists()) {
+				try(BufferedReader is = new BufferedReader(new FileReader(localBlacklist))) {
+					String ss;
+					while((ss = is.readLine()) != null) {
+						if((ss = ss.trim()).length() > 0) {
+							lines.add(ss);
+						}
 					}
+				}catch(IOException ex) {
+					// ?
 				}
-			}catch(IOException ex) {
-				// ?
 			}
-		}
-		if(lines.contains(p)) {
-			lines.remove(p);
-			try {
-				try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
-					for(String s : lines) {
-						os.println(s);
+			if(lines.remove(p)) {
+				try {
+					try(PrintWriter os = new PrintWriter(new FileWriter(localBlacklist))) {
+						for(String s : lines) {
+							os.println(s);
+						}
 					}
+				}catch(IOException ex) {
+					logger.error("Failed to save '" + localBlacklist.getName() + "'");
+					ex.printStackTrace();
+					return false;
 				}
 				lastLocalUpdate = 0l;
 				update();
 				return true;
-			}catch(IOException ex) {
-				logger.error("Failed to save '" + localBlacklist.getName() + "'");
-				ex.printStackTrace();
 			}
+			return false;
 		}
-		return false;
 	}
 
 	public File getLocalBlacklist() {
 		return localBlacklist;
+	}
+
+	public static String removeProtocolFromOrigin(String s) {
+		if(s == null) return null;
+		int idx = s.indexOf("://");
+		if(idx != -1) {
+			return s.substring(idx + 3);
+		}else {
+			return s;
+		}
 	}
 
 }

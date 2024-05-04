@@ -42,16 +42,25 @@ public class CommandDomainBlock extends Command {
 			p0.sendMessage(new TextComponent(ChatColor.RED + "That user is not online"));
 		}else {
 			if(user.getPendingConnection() instanceof EaglerInitialHandler) {
-				Object o = ((EaglerInitialHandler)user.getPendingConnection()).getOrigin();
+				String o = OriginBlacklist.removeProtocolFromOrigin(((EaglerInitialHandler)user.getPendingConnection()).getOrigin());
 				if(o != null) {
 					if("null".equals(o)) {
 						p0.sendMessage(new TextComponent(ChatColor.RED + "That user is on an offline download"));
 					}else {
 						OriginBlacklist bl = OriginBlacklistPluginBungee.getPlugin().list;
-						bl.addLocal((String)o);
+						bl.addLocal(o);
+						for(ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+							if(p.getPendingConnection() instanceof EaglerInitialHandler) {
+								String oo = OriginBlacklist.removeProtocolFromOrigin(((EaglerInitialHandler)p.getPendingConnection()).getOrigin());
+								if(oo != null) {
+									if(bl.test(oo)) {
+										p.disconnect(new TextComponent(bl.getKickMessage() == null ? "End of stream" : bl.getKickMessage()));
+									}
+								}
+							}
+						}
 						p0.sendMessage(new TextComponent(ChatColor.RED + "Domain of " + ChatColor.WHITE + p1[0] + ChatColor.RED + " is " + ChatColor.WHITE + o));
 						p0.sendMessage(new TextComponent(ChatColor.RED + "It was added to the local block list."));
-						user.disconnect(new TextComponent(bl.getKickMessage()));
 					}
 				}else {
 					p0.sendMessage(new TextComponent(ChatColor.RED + "Domain of " + p1[0] + " is unknown (desktop runtime?)"));

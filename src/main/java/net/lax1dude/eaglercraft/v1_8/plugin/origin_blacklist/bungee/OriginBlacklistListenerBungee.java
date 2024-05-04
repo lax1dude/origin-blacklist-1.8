@@ -41,7 +41,7 @@ public class OriginBlacklistListenerBungee implements Listener {
 			OriginBlacklist blacklist = plugin.list;
 			boolean shouldKick = true;
 			try {
-				shouldKick = (origin == null && blacklist.getBlockClientsWithNoOriginHeader()) || blacklist.test(origin);
+				shouldKick = origin == null ? blacklist.getBlockClientsWithNoOriginHeader() : blacklist.test(OriginBlacklist.removeProtocolFromOrigin(origin));
 			}catch(Throwable t) {
 				plugin.getLogger().log(Level.SEVERE, "Failed to check origin blacklist for: " + origin, t);
 			}
@@ -50,7 +50,7 @@ public class OriginBlacklistListenerBungee implements Listener {
 				evt.setCancelled(true);
 				String msg = blacklist.getKickMessage();
 				if(msg != null) {
-					evt.setReason(new TextComponent());
+					evt.setReason(new TextComponent(msg));
 				}
 			}
 		}

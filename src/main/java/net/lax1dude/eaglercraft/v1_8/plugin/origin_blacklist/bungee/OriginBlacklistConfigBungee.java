@@ -37,7 +37,7 @@ public class OriginBlacklistConfigBungee implements OriginBlacklistConfigAdapter
 		}
 		File configFile = new File(dataDir, "config.yml");
 		if(!configFile.exists()) {
-			try(InputStream defaultConf = OriginBlacklistConfigBungee.class.getResourceAsStream("../default_config.yml")) {
+			try(InputStream defaultConf = OriginBlacklistConfigBungee.class.getResourceAsStream("/net/lax1dude/eaglercraft/v1_8/plugin/origin_blacklist/default_config.yml")) {
 				try(OutputStream os = new FileOutputStream(configFile)) {
 					byte[] copyBuffer = new byte[1024];
 					int i;
