@@ -1,0 +1,1 @@
+{"id":"originblacklist","name":"OriginBlacklist","version":"1.0.0","description":"Plugin for EaglercraftXVelocity servers to add the \"origin blacklist\" feature from 1.5.2","authors":["lax1dude"],"dependencies":[{"id":"eaglerxvelocity","optional":false}],"main":"net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.velocity.OriginBlacklistPluginVelocity"}

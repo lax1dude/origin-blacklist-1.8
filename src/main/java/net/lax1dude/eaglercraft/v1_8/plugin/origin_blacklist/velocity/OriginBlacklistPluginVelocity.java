@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -18,6 +19,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.lax1dude.eaglercraft.v1_8.plugin.gateway_velocity.EaglerXVelocityVersion;
+import net.lax1dude.eaglercraft.v1_8.plugin.gateway_velocity.command.EaglerCommand;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklist;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklistConfigAdapter;
 import net.lax1dude.eaglercraft.v1_8.plugin.origin_blacklist.OriginBlacklistLoggerAdapter;
@@ -119,9 +121,14 @@ public class OriginBlacklistPluginVelocity {
 			}, 0, 6000l);
 		}
 		proxy.getEventManager().register(this, new OriginBlacklistListenerVelocity(this));
-		CommandRegisterHelper.register(this, new CommandDomainBlock());
-		CommandRegisterHelper.register(this, new CommandDomainBlockDomain());
-		CommandRegisterHelper.register(this, new CommandDomainUnblock());
+		registerCommand(new CommandDomainBlock());
+		registerCommand(new CommandDomainBlockDomain());
+		registerCommand(new CommandDomainUnblock());
+	}
+
+	private void registerCommand(EaglerCommand cmd) {
+		CommandManager cmdManager = proxy.getCommandManager();
+		cmdManager.register(cmdManager.metaBuilder(cmd.name).aliases(cmd.alias).plugin(this).build(), cmd);
 	}
 
 	@Subscribe
