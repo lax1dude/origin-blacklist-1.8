@@ -1,6 +1,6 @@
-# Origin Blacklist for EaglercraftXBungee 1.8
+# Origin Blacklist for EaglercraftXBungee and EaglercraftXVelocity 1.8
 
-### This plugin can be used to add the "Origin Blacklist" feature from Eaglercraft 1.5.2 to you EaglercraftXBungee 1.8 server. Fully compatible with old 1.5.2 config files.
+### This plugin can be used to add the "Origin Blacklist" feature from Eaglercraft 1.5.2 to you EaglercraftXBungee or EaglercraftXVelocity 1.8 server. Fully compatible with old 1.5.2 config files.
 
 ## Features
 
@@ -14,7 +14,7 @@
 
 ## Installation
 
-Place the "**[OriginBlacklist.jar](https://raw.githubusercontent.com/lax1dude/origin-blacklist-1.8/main/OriginBlacklist.jar)**" file in your BungeeCord server's plugins folder and restart the server, config files will be generated in "plugins/OriginBlacklist".
+Place the "**[OriginBlacklist.jar](https://raw.githubusercontent.com/lax1dude/origin-blacklist-1.8/main/OriginBlacklist.jar)**" file in your BungeeCord/Velocity server's plugins folder and restart the server, config files will be generated in "plugins/OriginBlacklist".
 
 ## Commands
 
